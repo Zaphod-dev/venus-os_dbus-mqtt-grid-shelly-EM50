@@ -1,5 +1,9 @@
 # Changelog
-
+Since forking
+## v0.1.6b 
+* Changed: updated code to handle the MQQT topics and payload structure specific of the Shelly Pro EM50
+* 
+From original repo :
 ## v0.1.6 (not released yet)
 * Added: Set device type to `grid`, `genset` or `acload`
 
