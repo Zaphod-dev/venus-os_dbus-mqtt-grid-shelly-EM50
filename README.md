@@ -7,28 +7,39 @@ I wrote this script for myself. I'm not responsible, if you damage something usi
 
 ### Purpose
 
-The script emulates a physical Grid/Genset/AC Load Meter in Venus OS. It gets the Shelly Pro EM50 MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.grid.mqtt_grid`, `com.victronenergy.genset.mqtt_genset` or `com.victronenergy.acload.mqtt_acload` with the VRM instance `31`.
+The script emulates a physical Grid/Genset/AC Load Meter in Venus OS. It gets the Shelly Pro EM50 MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.grid.mqtt_grid-shelly-EM50`, `com.victronenergy.genset.mqtt_genset` or `com.victronenergy.acload.mqtt_acload` with the VRM instance `31`.
 
 ### Config
 
-Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-grid` folder and change it as you need it.
+Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-grid-shelly-EM50` folder and change it as you need it.
 
 ### JSON structure
 
 <details><summary>Minimum required with just one CT clamp (L1)</summary>
-
+The Shelly sends the required data under two distinct topics :
+    YourShellyID/status/em1data:0
 ```json
 {
-    "grid": {
-        "power": 0.0,
-        "L1": {
-            "power": 0.0
-        }
-    }
+    "id":0,
+    "total_act_energy":123.45,
+    "total_act_ret_energy":12345.67
 }
 ```
 </details>
-
+    YourShellyID/status/em1:0
+```json
+{
+    "id":0,
+    "current":1.234,
+    "voltage":123.4,
+    "act_power":123.4,
+    "aprt_power":123.0,
+    "pf":0.12,
+    "freq":12.3,
+    "calibration":"factory"
+}
+```
+</details>
 Currently not implemented : import of the second CT clamp data (would be easy to do, but I have currently no use case for second clamp)
 
 ### Install
@@ -42,68 +53,68 @@ Currently not implemented : import of the second CT clamp data (would be easy to
     cd /tmp
 
     # download driver
-    wget -O /tmp/venus-os_dbus-mqtt-grid.zip https://github.com/mr-manuel/venus-os_dbus-mqtt-grid/archive/refs/heads/master.zip
+    wget -O /tmp/venus-os_dbus-mqtt-grid-shelly-EM50.zip https://github.com/Zaphod-dev/venus-os_dbus-mqtt-grid-shelly-EM50/archive/refs/heads/master.zip
 
     # If updating: cleanup old folder
-    rm -rf /tmp/venus-os_dbus-mqtt-grid-master
+    rm -rf /tmp/venus-os_dbus-mqtt-grid-shelly-EM50-master
 
     # unzip folder
-    unzip venus-os_dbus-mqtt-grid.zip
+    unzip venus-os_dbus-mqtt-grid-shelly-EM50.zip
 
     # If updating: backup existing config file
-    mv /data/etc/dbus-mqtt-grid/config.ini /data/etc/dbus-mqtt-grid_config.ini
+    mv /data/etc/dbus-mqtt-grid-shelly-EM50/config.ini /data/etc/dbus-mqtt-grid-shelly-EM50_config.ini
 
     # If updating: cleanup existing driver
-    rm -rf /data/etc/dbus-mqtt-grid
+    rm -rf /data/etc/dbus-mqtt-grid-shelly-EM50
 
     # copy files
-    cp -R /tmp/venus-os_dbus-mqtt-grid-master/dbus-mqtt-grid/ /data/etc/
+    cp -R /tmp/venus-os_dbus-mqtt-grid-shelly-EM50-master/dbus-mqtt-grid/ /data/etc/
 
     # If updating: restore existing config file
-    mv /data/etc/dbus-mqtt-grid_config.ini /data/etc/dbus-mqtt-grid/config.ini
+    mv /data/etc/dbus-mqtt-grid-shelly-EM50_config.ini /data/etc/dbus-mqtt-grid-shelly-EM50/config.ini
     ```
 
 3. Copy the sample config file, if you are installing the driver for the first time and edit it to your needs.
 
     ```bash
     # copy default config file
-    cp /data/etc/dbus-mqtt-grid/config.sample.ini /data/etc/dbus-mqtt-grid/config.ini
+    cp /data/etc/dbus-mqtt-grid-shelly-EM50/config.sample.ini /data/etc/dbus-mqtt-grid-shelly-EM50/config.ini
 
     # edit the config file with nano
-    nano /data/etc/dbus-mqtt-grid/config.ini
+    nano /data/etc/dbus-mqtt-grid-shelly-EM50/config.ini
     ```
 
-4. Run `bash /data/etc/dbus-mqtt-grid/install.sh` to install the driver as service.
+4. Run `bash /data/etc/dbus-mqtt-grid-shelly-EM50/install.sh` to install the driver as service.
 
    The daemon-tools should start this service automatically within seconds.
 
 ### Uninstall
 
-Run `/data/etc/dbus-mqtt-grid/uninstall.sh`
+Run `/data/etc/dbus-mqtt-grid-shelly-EM50/uninstall.sh`
 
 ### Restart
 
-Run `/data/etc/dbus-mqtt-grid/restart.sh`
+Run `/data/etc/dbus-mqtt-grid-shelly-EM50/restart.sh`
 
 ### Debugging
 
-The logs can be checked with `tail -n 100 -F /data/log/dbus-mqtt-grid/current | tai64nlocal`
+The logs can be checked with `tail -n 100 -F /data/log/dbus-mqtt-grid-shelly-EM50/current | tai64nlocal`
 
-The service status can be checked with svstat `svstat /service/dbus-mqtt-grid`
+The service status can be checked with svstat `svstat /service/dbus-mqtt-grid-shelly-EM50`
 
-This will output somethink like `/service/dbus-mqtt-grid: up (pid 5845) 185 seconds`
+This will output somethink like `/service/dbus-mqtt-grid-shelly-EM50: up (pid 5845) 185 seconds`
 
-If the seconds are under 5 then the service crashes and gets restarted all the time. If you do not see anything in the logs you can increase the log level in `/data/etc/dbus-mqtt-grid/dbus-mqtt-grid.py` by changing `level=logging.WARNING` to `level=logging.INFO` or `level=logging.DEBUG`
+If the seconds are under 5 then the service crashes and gets restarted all the time. If you do not see anything in the logs you can increase the log level in `/data/etc/dbus-mqtt-grid-shelly-EM50/dbus-mqtt-grid.py` by changing `level=logging.WARNING` to `level=logging.INFO` or `level=logging.DEBUG`
 
-If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.grid.mqtt_grid"` it means that the service is still running or another service is using that bus name.
+If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.grid.mqtt_grid-shelly-EM50"` it means that the service is still running or another service is using that bus name.
 
 ### Multiple instances
 
 It's possible to have multiple instances, but it's not automated. Follow these steps to achieve this:
 
-1. Save the new name to a variable `driverclone=dbus-mqtt-grid-2`
+1. Save the new name to a variable `driverclone=dbus-mqtt-grid-shelly-EM50-2`
 
-2. Copy current folder `cp -r /data/etc/dbus-mqtt-grid/ /data/etc/$driverclone/`
+2. Copy current folder `cp -r /data/etc/dbus-mqtt-grid-shelly-EM50/ /data/etc/$driverclone/`
 
 3. Rename the main script `mv /data/etc/$driverclone/dbus-mqtt-grid.py /data/etc/$driverclone/$driverclone.py`
 
@@ -121,8 +132,8 @@ Now you can install and run the cloned driver. Should you need another instance 
 
 It was tested on Venus OS Large `v2.92` on the following devices:
 
-* RaspberryPi 4b
-* MultiPlus II (GX Version)
+* RaspberryPi 2b
+* MultiPlus II
 
 ### Screenshots
 
@@ -132,23 +143,5 @@ It was tested on Venus OS Large `v2.92` on the following devices:
 ![Grid power L1 - device list](/screenshots/grid_power_L1_device-list.png)
 ![Grid power L1 - device list - mqtt grid 1](/screenshots/grid_power_L1_device-list_mqtt-grid-1.png)
 ![Grid power L1 - device list - mqtt grid 2](/screenshots/grid_power_L1_device-list_mqtt-grid-2.png)
-
-</details>
-
-<details><summary>Power, L1 and L2</summary>
-
-![Grid power L1, L2 - pages](/screenshots/grid_power_L2_L1_pages.png)
-![Grid power L1, L2 - device list](/screenshots/grid_power_L2_L1_device-list.png)
-![Grid power L1, L2 - device list - mqtt grid 1](/screenshots/grid_power_L2_L1_device-list_mqtt-grid-1.png)
-![Grid power L1, L2 - device list - mqtt grid 2](/screenshots/grid_power_L2_L1_device-list_mqtt-grid-2.png)
-
-</details>
-
-<details><summary>Power, L1, L2 and L3</summary>
-
-![Grid power L1, L2, L3 - pages](/screenshots/grid_power_L3_L2_L1_pages.png)
-![Grid power L1, L2, L3 - device list](/screenshots/grid_power_L3_L2_L1_device-list.png)
-![Grid power L1, L2, L3 - device list - mqtt grid 1](/screenshots/grid_power_L3_L2_L1_device-list_mqtt-grid-1.png)
-![Grid power L1, L2, L3 - device list - mqtt grid 2](/screenshots/grid_power_L3_L2_L1_device-list_mqtt-grid-2.png)
 
 </details>
