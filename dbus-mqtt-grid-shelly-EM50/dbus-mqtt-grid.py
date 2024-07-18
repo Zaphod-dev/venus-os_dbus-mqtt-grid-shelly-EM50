@@ -108,28 +108,8 @@ grid_current = 0
 grid_voltage = 0
 grid_forward = 0
 grid_reverse = 0
-
-grid_L1_power = None
-grid_L1_current = None
-grid_L1_voltage = None
-grid_L1_frequency = None
-grid_L1_forward = None
-grid_L1_reverse = None
-
-grid_L2_power = None
-grid_L2_current = None
-grid_L2_voltage = None
-grid_L2_frequency = None
-grid_L2_forward = None
-grid_L2_reverse = None
-
-grid_L3_power = None
-grid_L3_current = None
-grid_L3_voltage = None
-grid_L3_frequency = None
-grid_L3_forward = None
-grid_L3_reverse = None
-
+grid_frequency = 0
+grid_pf = 0
 
 # MQTT requests
 def on_disconnect(client, userdata, rc):
@@ -161,7 +141,8 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logging.info("MQTT client: Connected to MQTT broker!")
         connected = 1
-        client.subscribe(config["MQTT"]["topic"])
+        client.subscribe(config["MQTT"]["topic_instant"])
+        client.subscribe(config["MQTT"]["topic_energy"])
     else:
         logging.error("MQTT client: Failed to connect, return code %d\n", rc)
 
@@ -169,198 +150,78 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
         global last_changed, grid_power, grid_current, grid_voltage, grid_forward, grid_reverse, \
-            grid_L1_power, grid_L1_current, grid_L1_voltage, grid_L1_frequency, grid_L1_forward, grid_L1_reverse, \
-            grid_L2_power, grid_L2_current, grid_L2_voltage, grid_L2_frequency, grid_L2_forward, grid_L2_reverse, \
-            grid_L3_power, grid_L3_current, grid_L3_voltage, grid_L3_frequency, grid_L3_forward, grid_L3_reverse
+            grid_pf, grid_frequency
 
         # get JSON from topic
-        if msg.topic == config["MQTT"]["topic"]:
+        if msg.topic == config["MQTT"]["topic_energy"]:
             if msg.payload != "" and msg.payload != b"":
                 jsonpayload = json.loads(msg.payload)
 
                 last_changed = int(time())
 
-                if "grid" in jsonpayload:
-                    if isinstance(jsonpayload["grid"], dict):
-                        if "power" in jsonpayload["grid"]:
-                            grid_power = float(jsonpayload["grid"]["power"])
-                            grid_voltage = (
-                                float(jsonpayload["grid"]["voltage"])
-                                if "voltage" in jsonpayload["grid"]
-                                else float(config["DEFAULT"]["voltage"])
-                            )
-                            grid_current = (
-                                float(jsonpayload["grid"]["current"])
-                                if "current" in jsonpayload["grid"]
-                                else (
-                                    grid_power / grid_voltage
-                                    if grid_voltage != 0
-                                    else 0
-                                )
-                            )
-                            grid_forward = (
-                                float(jsonpayload["grid"]["energy_forward"])
-                                if "energy_forward" in jsonpayload["grid"]
-                                else None
-                            )
-                            grid_reverse = (
-                                float(jsonpayload["grid"]["energy_reverse"])
-                                if "energy_reverse" in jsonpayload["grid"]
-                                else None
-                            )
-
-                            # check if L1 and L1 -> power exists
-                            if (
-                                "L1" in jsonpayload["grid"]
-                                and "power" in jsonpayload["grid"]["L1"]
-                            ):
-                                grid_L1_power = float(jsonpayload["grid"]["L1"]["power"])
-                                grid_L1_voltage = (
-                                    float(jsonpayload["grid"]["L1"]["voltage"])
-                                    if "voltage" in jsonpayload["grid"]["L1"]
-                                    else float(config["DEFAULT"]["voltage"])
-                                )
-                                grid_L1_current = (
-                                    float(jsonpayload["grid"]["L1"]["current"])
-                                    if "current" in jsonpayload["grid"]["L1"]
-                                    else (
-                                        grid_L1_power / grid_L1_voltage
-                                        if grid_L1_voltage != 0
-                                        else 0
-
-                                    )
-                                )
-                                grid_L1_frequency = (
-                                    float(jsonpayload["grid"]["L1"]["frequency"])
-                                    if "frequency" in jsonpayload["grid"]["L1"]
-                                    else None
-                                )
-                                grid_L1_forward = (
-                                    float(jsonpayload["grid"]["L1"]["energy_forward"])
-                                    if "energy_forward" in jsonpayload["grid"]["L1"]
-                                    else 0
-                                )
-                                grid_L1_reverse = (
-                                    float(jsonpayload["grid"]["L1"]["energy_reverse"])
-                                    if "energy_reverse" in jsonpayload["grid"]["L1"]
-                                    else 0
-                                )
-
-                            # check if L2 and L2 -> power exists
-                            if (
-                                "L2" in jsonpayload["grid"]
-                                and "power" in jsonpayload["grid"]["L2"]
-                            ):
-                                grid_L2_power = float(jsonpayload["grid"]["L2"]["power"])
-                                grid_L2_voltage = (
-                                    float(jsonpayload["grid"]["L2"]["voltage"])
-                                    if "voltage" in jsonpayload["grid"]["L2"]
-                                    else float(config["DEFAULT"]["voltage"])
-                                )
-                                grid_L2_current = (
-                                    float(jsonpayload["grid"]["L2"]["current"])
-                                    if "current" in jsonpayload["grid"]["L2"]
-                                    else (
-                                        grid_L2_power / grid_L2_voltage
-                                        if grid_L2_voltage != 0
-                                        else 0
-                                    )
-                                )
-                                grid_L2_frequency = (
-                                    float(jsonpayload["grid"]["L2"]["frequency"])
-                                    if "frequency" in jsonpayload["grid"]["L2"]
-                                    else None
-                                )
-                                grid_L2_forward = (
-                                    float(jsonpayload["grid"]["L2"]["energy_forward"])
-                                    if "energy_forward" in jsonpayload["grid"]["L2"]
-                                    else 0
-                                )
-                                grid_L2_reverse = (
-                                    float(jsonpayload["grid"]["L2"]["energy_reverse"])
-                                    if "energy_reverse" in jsonpayload["grid"]["L2"]
-                                    else 0
-                                )
-
-                            # check if L3 and L3 -> power exists
-                            if (
-                                "L3" in jsonpayload["grid"]
-                                and "power" in jsonpayload["grid"]["L3"]
-                            ):
-                                grid_L3_power = float(jsonpayload["grid"]["L3"]["power"])
-                                grid_L3_voltage = (
-                                    float(jsonpayload["grid"]["L3"]["voltage"])
-                                    if "voltage" in jsonpayload["grid"]["L3"]
-                                    else float(config["DEFAULT"]["voltage"])
-                                )
-                                grid_L3_current = (
-                                    float(jsonpayload["grid"]["L3"]["current"])
-                                    if "current" in jsonpayload["grid"]["L3"]
-                                    else (
-                                        grid_L3_power / grid_L3_voltage
-                                        if grid_L3_voltage != 0
-                                        else 0
-
-                                    )
-                                )
-                                grid_L3_frequency = (
-                                    float(jsonpayload["grid"]["L3"]["frequency"])
-                                    if "frequency" in jsonpayload["grid"]["L3"]
-                                    else None
-                                )
-                                grid_L3_forward = (
-                                    float(jsonpayload["grid"]["L3"]["energy_forward"])
-                                    if "energy_forward" in jsonpayload["grid"]["L3"]
-                                    else 0
-                                )
-                                grid_L3_reverse = (
-                                    float(jsonpayload["grid"]["L3"]["energy_reverse"])
-                                    if "energy_reverse" in jsonpayload["grid"]["L3"]
-                                    else 0
-                                )
-                        # for Tasmota support
-                        # the power and power_L1-3 values have to be sent within the same second or
-                        # power as last one, else on startup the phases are not correctly recognized
-                        elif "power_L1" in jsonpayload["grid"]:
-                            grid_L1_power = float(jsonpayload["grid"]["power_L1"])
-                            grid_L1_voltage = float(config["DEFAULT"]["voltage"])
-                            grid_L1_current = grid_L1_power / float(config["DEFAULT"]["voltage"])
-                            grid_L1_frequency = None
-                            grid_L1_forward = 0
-                            grid_L1_reverse = 0
-                        elif "power_L2" in jsonpayload["grid"]:
-                            grid_L2_power = float(jsonpayload["grid"]["power_L2"])
-                            grid_L2_voltage = float(config["DEFAULT"]["voltage"])
-                            grid_L2_current = grid_L2_power / float(config["DEFAULT"]["voltage"])
-                            grid_L2_frequency = None
-                            grid_L2_forward = 0
-                            grid_L2_reverse = 0
-                        elif "power_L3" in jsonpayload["grid"]:
-                            grid_L3_power = float(jsonpayload["grid"]["power_L3"])
-                            grid_L3_voltage = float(config["DEFAULT"]["voltage"])
-                            grid_L3_current = grid_L3_power / float(config["DEFAULT"]["voltage"])
-                            grid_L3_frequency = None
-                            grid_L3_forward = 0
-                            grid_L3_reverse = 0
-                        else:
-                            logging.error(
-                                'Received JSON MQTT message does not include a power object in the grid object. Expected at least: {"grid": {"power": 0.0}"}'
-                            )
-                            logging.debug("MQTT payload: " + str(msg.payload)[1:])
-                    else:
-                        logging.error(
-                            'Received JSON MQTT message grid object is not of type dictionary. Expected at least: {"grid": {"power": 0.0}"}'
-                        )
-                        logging.debug("MQTT payload: " + str(msg.payload)[1:])
+                if "total_act_energy" in jsonpayload:
+                    grid_forward = (
+                        float(jsonpayload["total_act_energy"])
+                    )
+                    grid_reverse = (
+                        float(jsonpayload["total_act_ret_energy"])
+                        if "total_act_ret_energy" in jsonpayload
+                        else None
+                    )
+                    logging.debug("MQTT energy grid_forward %s -  " % grid_forward)
+                    logging.debug("MQTT energy grid_reverse %s -  " % grid_reverse)
+                    logging.debug("MQTT payload: " + str(msg.payload)[1:])
                 else:
                     logging.error(
-                        'Received JSON MQTT message does not include a grid object. Expected at least: {"grid": {"power": 0.0}"}'
+                        'Received JSON MQTT topic_energy message does not include expected data: {"total_act_energy": 0}'
                     )
                     logging.debug("MQTT payload: " + str(msg.payload)[1:])
-
             else:
                 logging.warning(
-                    "Received JSON MQTT message was empty and therefore it was ignored"
+                    "Received JSON MQTT topic_energy message was empty and therefore it was ignored"
+                )
+                logging.debug("MQTT payload: " + str(msg.payload)[1:])
+
+        elif msg.topic == config["MQTT"]["topic_instant"]:
+            if msg.payload != "" and msg.payload != b"":
+                jsonpayload = json.loads(msg.payload)
+
+                last_changed = int(time())
+
+                if "act_power" in jsonpayload:
+                    grid_power = float(jsonpayload["act_power"])
+                    grid_voltage = (
+                        float(jsonpayload["voltage"])
+                        if "voltage" in jsonpayload
+                        else float(config["DEFAULT"]["voltage"])
+                    )
+                    grid_current = (
+                        float(jsonpayload["current"])
+                        if "current" in jsonpayload
+                        else (
+                            grid_power / grid_voltage
+                            if grid_voltage != 0
+                            else 0
+                        )
+                    )
+                    grid_frequency = (
+                        float(jsonpayload["freq"])
+                        if "freq" in jsonpayload
+                        else None
+                    )
+                    grid_pf = (
+                        float(jsonpayload["pf"])
+                        if "pf" in jsonpayload
+                        else None
+                    )
+                else:
+                    logging.error(
+                        'Received JSON MQTT topic_instant message does not include expected data: {"act_power": 0.0}'
+                    )
+                    logging.debug("MQTT payload: " + str(msg.payload)[1:])
+            else:
+                logging.warning(
+                    "Received JSON MQTT topic_instant message was empty and therefore it was ignored"
                 )
                 logging.debug("MQTT payload: " + str(msg.payload)[1:])
 
@@ -406,7 +267,7 @@ class DbusMqttGridService:
         self._dbusservice.add_path("/ProductId", 0xFFFF)
         self._dbusservice.add_path("/ProductName", productname)
         self._dbusservice.add_path("/CustomName", customname)
-        self._dbusservice.add_path("/FirmwareVersion", "0.1.6 (20240703)")
+        self._dbusservice.add_path("/FirmwareVersion", "0.1.6b (20240718)")
         # self._dbusservice.add_path('/HardwareVersion', '')
         self._dbusservice.add_path("/Connected", 1)
 
@@ -434,127 +295,48 @@ class DbusMqttGridService:
                 self._dbusservice["/Ac/Power"] = (
                     round(grid_power, 2) if grid_power is not None else None
                 )  # positive: consumption, negative: feed into grid
-                self._dbusservice["/Ac/Current"] = (
+                self._dbusservice["/Ac/L1/Power"] = (
+                    round(grid_power, 2) if grid_current is not None else None
+                )
+                self._dbusservice["/Ac/L2/Power"] = None
+                self._dbusservice["/Ac/L3/Power"] = None
+                self._dbusservice["/Ac/L1/Current"] = (
                     round(grid_current, 2) if grid_current is not None else None
                 )
-                self._dbusservice["/Ac/Voltage"] = (
+                self._dbusservice["/Ac/L1/Voltage"] = (
                     round(grid_voltage, 2) if grid_voltage is not None else None
+                )
+                self._dbusservice["/Ac/L1/Frequency"] = (
+                    round(grid_frequency, 2) if grid_frequency is not None else None
+                )
+                self._dbusservice["/Ac/L1/PowerFactor"] = (
+                    round(grid_pf, 2) if grid_pf is not None else None
                 )
                 if grid_forward is not None:
                     self._dbusservice["/Ac/Energy/Forward"] = (
                         round(grid_forward, 2)
                     )
+                    self._dbusservice["/Ac/L1/Energy/Forward"] = (
+                        round(grid_forward, 2)
+                    )
+                    self._dbusservice["/Ac/L2/Energy/Forward"] = None
+                    self._dbusservice["/Ac/L3/Energy/Forward"] = None
                 if grid_reverse is not None:
                     self._dbusservice["/Ac/Energy/Reverse"] = (
                         round(grid_reverse, 2)
                     )
-
-                if grid_L1_power is not None:
-                    self._dbusservice["/Ac/L1/Power"] = (
-                        round(grid_L1_power, 2) if grid_L1_power is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Current"] = (
-                        round(grid_L1_current, 2) if grid_L1_current is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Voltage"] = (
-                        round(grid_L1_voltage, 2) if grid_L1_voltage is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Frequency"] = (
-                        round(grid_L1_frequency, 2)
-                        if grid_L1_frequency is not None
-                        else None
-                    )
-                    self._dbusservice["/Ac/L1/Energy/Forward"] = (
-                        round(grid_L1_forward, 2) if grid_L1_forward is not None else None
-                    )
                     self._dbusservice["/Ac/L1/Energy/Reverse"] = (
-                        round(grid_L1_reverse, 2) if grid_L1_reverse is not None else None
+                        round(grid_reverse, 2)
                     )
-                else:
-                    self._dbusservice["/Ac/L1/Power"] = (
-                        round(grid_power, 2) if grid_power is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Current"] = (
-                        round(grid_current, 2) if grid_current is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Voltage"] = (
-                        round(grid_voltage, 2) if grid_voltage is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Frequency"] = None
-                    self._dbusservice["/Ac/L1/Energy/Forward"] = (
-                        round(grid_forward, 2) if grid_forward is not None else None
-                    )
-                    self._dbusservice["/Ac/L1/Energy/Reverse"] = (
-                        round(grid_reverse, 2) if grid_reverse is not None else None
-                    )
-
-                if grid_L2_power is not None:
-                    self._dbusservice["/Ac/L2/Power"] = (
-                        round(grid_L2_power, 2) if grid_L2_power is not None else None
-                    )
-                    self._dbusservice["/Ac/L2/Current"] = (
-                        round(grid_L2_current, 2) if grid_L2_current is not None else None
-                    )
-                    self._dbusservice["/Ac/L2/Voltage"] = (
-                        round(grid_L2_voltage, 2) if grid_L2_voltage is not None else None
-                    )
-                    self._dbusservice["/Ac/L2/Frequency"] = (
-                        round(grid_L2_frequency, 2)
-                        if grid_L2_frequency is not None
-                        else None
-                    )
-                    self._dbusservice["/Ac/L2/Energy/Forward"] = (
-                        round(grid_L2_forward, 2) if grid_L2_forward is not None else None
-                    )
-                    self._dbusservice["/Ac/L2/Energy/Reverse"] = (
-                        round(grid_L2_reverse, 2) if grid_L2_reverse is not None else None
-                    )
-
-                if grid_L3_power is not None:
-                    self._dbusservice["/Ac/L3/Power"] = (
-                        round(grid_L3_power, 2) if grid_L3_power is not None else None
-                    )
-                    self._dbusservice["/Ac/L3/Current"] = (
-                        round(grid_L3_current, 2) if grid_L3_current is not None else None
-                    )
-                    self._dbusservice["/Ac/L3/Voltage"] = (
-                        round(grid_L3_voltage, 2) if grid_L3_voltage is not None else None
-                    )
-                    self._dbusservice["/Ac/L3/Frequency"] = (
-                        round(grid_L3_frequency, 2)
-                        if grid_L3_frequency is not None
-                        else None
-                    )
-                    self._dbusservice["/Ac/L3/Energy/Forward"] = (
-                        round(grid_L3_forward, 2) if grid_L3_forward is not None else None
-                    )
-                    self._dbusservice["/Ac/L3/Energy/Reverse"] = (
-                        round(grid_L3_reverse, 2) if grid_L3_reverse is not None else None
-                    )
+                    self._dbusservice["/Ac/L2/Energy/Reverse"] = None
+                    self._dbusservice["/Ac/L3/Energy/Reverse"] = None
 
                 logging.debug(
-                    "Grid: {:.1f} W - {:.1f} V - {:.1f} A".format(
-                        grid_power, grid_voltage, grid_current
+                    # "Grid: {:.1f} W - {:.1f} V - {:.1f} A - {:.1f} Hz - PF {:.1f} - Fwd {:.1f} kWh - Rev {:.1f} kWh".format(
+                    "Grid: {:.1f} W - {:.1f} V - {:.1f} A - {:.1f} Hz - PF {:.1f}".format(
+                        grid_power, grid_voltage, grid_current, grid_frequency, grid_pf
                     )
                 )
-                if grid_L1_power:
-                    logging.debug(
-                        "|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(
-                            grid_L1_power, grid_L1_voltage, grid_L1_current
-                        )
-                    )
-                if grid_L2_power:
-                    logging.debug(
-                        "|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(
-                            grid_L2_power, grid_L2_voltage, grid_L2_current
-                        )
-                    )
-                if grid_L3_power:
-                    logging.debug(
-                        "|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(
-                            grid_L3_power, grid_L3_voltage, grid_L3_current
-                        )
-                    )
 
                 last_updated = last_changed
 
@@ -687,8 +469,8 @@ def main():
         i += 1
 
     # formatting
-    def _kwh(p, v):
-        return str("%.2f" % v) + "kWh"
+    def _wh(p, v):
+        return str("%.2f" % v) + "Wh"
 
     def _a(p, v):
         return str("%.1f" % v) + "A"
@@ -707,48 +489,23 @@ def main():
 
     paths_dbus = {
         "/Ac/Power": {"initial": 0, "textformat": _w},
-        "/Ac/Current": {"initial": 0, "textformat": _a},
-        "/Ac/Voltage": {"initial": 0, "textformat": _v},
-        "/Ac/Energy/Forward": {
-            "initial": None,
-            "textformat": _kwh,
-        },  # energy bought from the grid
-        "/Ac/Energy/Reverse": {
-            "initial": None,
-            "textformat": _kwh,
-        },  # energy sold to the grid
+        "/Ac/Energy/Forward": {"initial": None,"textformat": _wh},  # energy bought from the grid
+        "/Ac/Energy/Reverse": {"initial": None,"textformat": _wh},  # energy sold to the grid
+        "/Ac/L1/Energy/Forward": {"initial": None,"textformat": _wh},  # energy bought from the grid
+        "/Ac/L1/Energy/Reverse": {"initial": None,"textformat": _wh},  # energy sold to the grid
+        "/Ac/L2/Energy/Forward": {"initial": None,"textformat": _wh},  # energy bought from the grid
+        "/Ac/L2/Energy/Reverse": {"initial": None,"textformat": _wh},  # energy sold to the grid
+        "/Ac/L3/Energy/Forward": {"initial": None,"textformat": _wh},  # energy bought from the grid
+        "/Ac/L3/Energy/Reverse": {"initial": None,"textformat": _wh},  # energy sold to the grid
         "/Ac/L1/Power": {"initial": 0, "textformat": _w},
+        "/Ac/L2/Power": {"initial": 0, "textformat": _w},
+        "/Ac/L3/Power": {"initial": 0, "textformat": _w},
         "/Ac/L1/Current": {"initial": 0, "textformat": _a},
         "/Ac/L1/Voltage": {"initial": 0, "textformat": _v},
         "/Ac/L1/Frequency": {"initial": None, "textformat": _hz},
-        "/Ac/L1/Energy/Forward": {"initial": None, "textformat": _kwh},
-        "/Ac/L1/Energy/Reverse": {"initial": None, "textformat": _kwh},
+        "/Ac/L1/PowerFactor": {"initial": None, "textformat": _n},
         "/UpdateIndex": {"initial": 0, "textformat": _n},
     }
-
-    if grid_L2_power is not None:
-        paths_dbus.update(
-            {
-                "/Ac/L2/Power": {"initial": 0, "textformat": _w},
-                "/Ac/L2/Current": {"initial": 0, "textformat": _a},
-                "/Ac/L2/Voltage": {"initial": 0, "textformat": _v},
-                "/Ac/L2/Frequency": {"initial": None, "textformat": _hz},
-                "/Ac/L2/Energy/Forward": {"initial": None, "textformat": _kwh},
-                "/Ac/L2/Energy/Reverse": {"initial": None, "textformat": _kwh},
-            }
-        )
-
-    if grid_L3_power is not None:
-        paths_dbus.update(
-            {
-                "/Ac/L3/Power": {"initial": 0, "textformat": _w},
-                "/Ac/L3/Current": {"initial": 0, "textformat": _a},
-                "/Ac/L3/Voltage": {"initial": 0, "textformat": _v},
-                "/Ac/L3/Frequency": {"initial": None, "textformat": _hz},
-                "/Ac/L3/Energy/Forward": {"initial": None, "textformat": _kwh},
-                "/Ac/L3/Energy/Reverse": {"initial": None, "textformat": _kwh},
-            }
-        )
 
     DbusMqttGridService(
         servicename="com.victronenergy." + device_type + ".mqtt_" + device_type + "_"
