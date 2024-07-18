@@ -15,8 +15,9 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-grid-sh
 
 ### JSON structure
 
-<details><summary>Minimum required with just one CT clamp (L1)</summary>
+#### Minimum required with just one CT clamp (L1)
 The Shelly sends the required data under two distinct topics :
+
     YourShellyID/status/em1data:0
 ```json
 {
@@ -25,7 +26,7 @@ The Shelly sends the required data under two distinct topics :
     "total_act_ret_energy":12345.67
 }
 ```
-</details>
+
     YourShellyID/status/em1:0
 ```json
 {
@@ -39,7 +40,7 @@ The Shelly sends the required data under two distinct topics :
     "calibration":"factory"
 }
 ```
-</details>
+
 Currently not implemented : import of the second CT clamp data (would be easy to do, but I have currently no use case for second clamp)
 
 ### Install
