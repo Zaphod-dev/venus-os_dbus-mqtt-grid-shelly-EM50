@@ -69,7 +69,7 @@ Currently not implemented : import of the second CT clamp data (would be easy to
     rm -rf /data/etc/dbus-mqtt-grid-shelly-EM50
 
     # copy files
-    cp -R /tmp/venus-os_dbus-mqtt-grid-shelly-EM50-master/dbus-mqtt-grid/ /data/etc/
+    cp -R /tmp/venus-os_dbus-mqtt-grid-shelly-EM50-master/dbus-mqtt-grid-shelly-EM50/ /data/etc/
 
     # If updating: restore existing config file
     mv /data/etc/dbus-mqtt-grid-shelly-EM50_config.ini /data/etc/dbus-mqtt-grid-shelly-EM50/config.ini
@@ -105,7 +105,7 @@ The service status can be checked with svstat `svstat /service/dbus-mqtt-grid-sh
 
 This will output somethink like `/service/dbus-mqtt-grid-shelly-EM50: up (pid 5845) 185 seconds`
 
-If the seconds are under 5 then the service crashes and gets restarted all the time. If you do not see anything in the logs you can increase the log level in `/data/etc/dbus-mqtt-grid-shelly-EM50/dbus-mqtt-grid.py` by changing `level=logging.WARNING` to `level=logging.INFO` or `level=logging.DEBUG`
+If the seconds are under 5 then the service crashes and gets restarted all the time. If you do not see anything in the logs you can increase the log level in `/data/etc/dbus-mqtt-grid-shelly-EM50/dbus-mqtt-grid-shelly-EM50.py` by changing `level=logging.WARNING` to `level=logging.INFO` or `level=logging.DEBUG`
 
 If the script stops with the message `dbus.exceptions.NameExistsException: Bus name already exists: com.victronenergy.grid.mqtt_grid-shelly-EM50"` it means that the service is still running or another service is using that bus name.
 
@@ -121,8 +121,8 @@ It's possible to have multiple instances, but it's not automated. Follow these s
 
 4. Fix the script references for service and log
     ```
-    sed -i 's:dbus-mqtt-grid:'$driverclone':g' /data/etc/$driverclone/service/run
-    sed -i 's:dbus-mqtt-grid:'$driverclone':g' /data/etc/$driverclone/service/log/run
+    sed -i 's:dbus-mqtt-grid-shelly-EM50:'$driverclone':g' /data/etc/$driverclone/service/run
+    sed -i 's:dbus-mqtt-grid-shelly-EM50:'$driverclone':g' /data/etc/$driverclone/service/log/run
     ```
 
 5. Change the `device_name`, increase the `device_instance` and update the `topic` in the `config.ini`
@@ -131,7 +131,7 @@ Now you can install and run the cloned driver. Should you need another instance 
 
 ### Compatibility
 
-It was tested on Venus OS Large `v2.92` on the following devices:
+It was tested on Venus OS Large `v3.3` on the following devices:
 
 * RaspberryPi 2b
 * MultiPlus II
