@@ -1,4 +1,4 @@
 #!/bin/sh
-echo "*** starting dbus-mqtt-grid ***"
+echo "*** starting dbus-mqtt-grid-shelly-EM50 ***"
 exec 2>&1
-exec /data/etc/dbus-mqtt-grid/dbus-mqtt-grid.py
+exec /data/etc/dbus-mqtt-grid-shelly-EM50/dbus-mqtt-grid-shelly-EM50.py
