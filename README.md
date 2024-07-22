@@ -1,5 +1,5 @@
 # dbus-mqtt-grid-shelly-EM50 - Emulates a physical Grid/Genset/AC Load Meter from Shelly PRO EM50 CT sensors via MQTT data
-This fork or Mr Manuel's repo (all credits to him for making this feasible!) essentially just remaps the Shelly out of the box MQQT payloads to the relevant Venus OS DBus data
+This fork of Mr Manuel's repo (all credits to him for making this feasible!) essentially just remaps the Shelly out of the box MQQT payloads to the relevant Venus OS DBus data
 
 ### Disclaimer
 
@@ -131,7 +131,7 @@ Now you can install and run the cloned driver. Should you need another instance 
 
 ### Compatibility
 
-It was tested on Venus OS Large `v3.3` on the following devices:
+It was tested on Venus OS `v3.31` on the following devices:
 
 * RaspberryPi 2b
 * MultiPlus II
