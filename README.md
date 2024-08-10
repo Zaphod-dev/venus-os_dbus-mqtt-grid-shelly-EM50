@@ -1,5 +1,5 @@
 # dbus-mqtt-grid-shelly-EM50 - Emulates a physical Grid/Genset/AC Load Meter from Shelly PRO EM50 CT sensors via MQTT data
-This fork of Mr Manuel's repo (all credits to him for making this feasible!) essentially just remaps the Shelly out of the box MQQT payloads to the relevant Venus OS DBus data
+This fork of Mr Manuel's repo (all credits to him for making this feasible!) essentially just remaps the Shelly out of the box MQTT payloads to the relevant Venus OS DBus data
 
 ### Disclaimer
 
